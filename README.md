@@ -41,14 +41,14 @@ placing offspring at $`x'`$ with probability density $`m(x'-x)`$, so the rate de
 of births at a location $`y`$ is
 
 ```math
-B(y \mid X) = b \sum_{x \in X} m(y - x). \tag{1}
+B(y \mid X) = b \sum_{x \in X} m(y - x). \qquad\text{(1)}
 ```
 
 An individual at $`x`$ dies at a rate made of a background term and competition from
 every **other** individual:
 
 ```math
-D(x \mid X) = d + d' \sum_{x' \in X,\; x' \ne x} w(x - x'). \tag{2}
+D(x \mid X) = d + d' \sum_{x' \in X,\; x' \ne x} w(x - x'). \qquad\text{(2)}
 ```
 
 Both kernels are isotropic $`n`$-dimensional Gaussians of standard deviation
@@ -57,7 +57,7 @@ $`\sigma_\mathrm{m}`$ (dispersal) and $`\sigma_\mathrm{w}`$ (competition):
 ```math
 m(x) = \frac{\exp\!\big(-\lVert x\rVert^2 / 2\sigma_\mathrm{m}^2\big)}{(2\pi\sigma_\mathrm{m}^2)^{n/2}},
 \qquad
-w(x) = \frac{\exp\!\big(-\lVert x\rVert^2 / 2\sigma_\mathrm{w}^2\big)}{(2\pi\sigma_\mathrm{w}^2)^{n/2}}. \tag{3}
+w(x) = \frac{\exp\!\big(-\lVert x\rVert^2 / 2\sigma_\mathrm{w}^2\big)}{(2\pi\sigma_\mathrm{w}^2)^{n/2}}. \qquad\text{(3)}
 ```
 
 Equations (1)–(2) are rates, not probabilities: together they define a
@@ -71,7 +71,7 @@ function of a configuration, the first and second moments are the expectations o
 ```math
 N(p) = \frac{1}{|A|}\int_A p(\xi)\,d\xi,
 \qquad
-C(x,p) = \frac{1}{|A|}\int_A p(\xi)\big[p(\xi+x)-\delta(x)\big]\,d\xi, \tag{A2, A3}
+C(x,p) = \frac{1}{|A|}\int_A p(\xi)\big[p(\xi+x)-\delta(x)\big]\,d\xi, \qquad\text{(A2, A3)}
 ```
 
 the mean density of individuals and of ordered pairs at displacement $`x`$; the
@@ -84,11 +84,11 @@ couples to the pair density, and the pair equation couples to the triplet
 (Law & Dieckmann 2000):
 
 ```math
-\frac{dN}{dt} = (b-d)N - d'\!\int w(y)\,C(y)\,dy, \tag{A4}
+\frac{dN}{dt} = (b-d)N - d'\!\int w(y)\,C(y)\,dy, \qquad\text{(A4)}
 ```
 
 ```math
-\frac{\partial C(x)}{\partial t} = 2\Big[\,b\,m(x)N + b\!\int m(x-y)C(y)\,dy - \big(d + d'w(x)\big)C(x) - d'\!\int w(y)\,T(x,y)\,dy\,\Big]. \tag{A5}
+\frac{\partial C(x)}{\partial t} = 2\Big[\,b\,m(x)N + b\!\int m(x-y)C(y)\,dy - \big(d + d'w(x)\big)C(x) - d'\!\int w(y)\,T(x,y)\,dy\,\Big]. \qquad\text{(A5)}
 ```
 
 **Closure.** The hierarchy is closed with the asymmetric power-2 closure
@@ -96,11 +96,12 @@ couples to the pair density, and the pair equation couples to the triplet
 triplet by pairs:
 
 ```math
-T(x,y) = \frac{1}{\alpha+\gamma}\Big[\alpha\frac{C(x)C(y)}{N} + \beta\frac{C(x)C(x-y)}{N} + \gamma\frac{C(y)C(x-y)}{N} - \beta N^3\Big]. \tag{A6}
+T(x,y) = \frac{1}{\alpha+\gamma}\Big[\alpha\frac{C(x)C(y)}{N} + \beta\frac{C(x)C(x-y)}{N} + \gamma\frac{C(y)C(x-y)}{N} - \beta N^3\Big]. \qquad\text{(A6)}
 ```
 
-This code uses **weights 4 : 1 : 1** ($`\alpha=\tfrac23,\ \beta=\gamma=\tfrac16`$;
-`CLOSURE=4,1,1`); the subtractive term keeps the mean-field limit exact
+This code uses **weights 4 : 1 : 1** ($`\alpha=4,\ \beta=\gamma=1`$; `CLOSURE=4,1,1`; only the
+ratios matter, so this is the same closure as the paper's normalized
+$`\alpha=\tfrac23,\ \beta=\gamma=\tfrac16`$); the subtractive term keeps the mean-field limit exact
 ($`T=N^3`$ when $`C=N^2`$), and $`1:0:0`$ recovers the simpler closure $`T=C(x)C(y)/N`$.
 Substituting (A6) into the equilibrium form of (A5) gives the nonlinear integral
 equation that `FP.py` solves by fixed-point iteration on a radial grid (the full
@@ -110,7 +111,7 @@ equilibrium equation is Eq. A7 in [`model.md`](model.md)).
 **exactly**, with no approximation:
 
 ```math
-\frac{N}{\lambda} = \left[\int_{\mathbb{R}^n} w(x)\,g(x)\,dx\right]^{-1}, \tag{5}
+\frac{N}{\lambda} = \left[\int_{\mathbb{R}^n} w(x)\,g(x)\,dx\right]^{-1}, \qquad\text{(5)}
 ```
 
 where $`\lambda=(b-d)/d'`$ is the mean-field density. Overdispersion ($`g<1`$ where
