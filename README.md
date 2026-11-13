@@ -1,606 +1,341 @@
-# Spatial Logistic Dynamics in One, Two, and Three Dimensions
+# Spatial logistic dynamics in one, two, and three dimensions
 
-Equilibria of the spatial logistic model of Bolker & Pacala (1997) and Law & Dieckmann (2000), computed in habitats of dimension **n = 1, 2, and 3** using two independent methods and compared cell by cell:
+Equilibria of the spatial logistic model of Bolker & Pacala (1997) and Law &
+Dieckmann (2000), computed in habitats of dimension **n = 1, 2, 3** by two
+independent methods and compared cell by cell:
 
-- **IBM** — an exact, event-driven (Gillespie) simulation of the individual-based model.
-- **FP** — the **fixed point** of the second-order spatial-moment equations, closed using the asymmetric power-2 closure with weights **4 : 1 : 1**.
+* **IBM** — an exact, event-driven (Gillespie) simulation of the
+  individual-based model;
+* **FP** — the **fixed point** of the second-order spatial-moment equations
+  closed with the asymmetric power-2 closure (weights **4 : 1 : 1**).
 
-Both methods sweep a **60 × 60 parameter grid** of the two standardized interaction radii:
+Each method sweeps a **60 × 60** grid of the two standardized interaction radii
+— the dispersal radius $`\tilde{\sigma}_\mathrm{m}`$ and the competition radius
+$`\tilde{\sigma}_\mathrm{w}`$, logarithmically spaced over $`[0.1, 10]`$ — in all
+three dimensions, and produces four comparison figures (carrying capacity,
+zero-distance pair density, half-saturation distance, and spatial-structure
+degree) together with the CSV data behind them.
 
-- Dispersal radius: \(\tilde{\sigma}_{\mathrm{m}}\)
-- Competition radius: \(\tilde{\sigma}_{\mathrm{w}}\)
+This repository accompanies the paper *Effects of Competition and Dispersal
+Distances on Carrying Capacities of Spatial Logistic Dynamics in One-, Two-, and
+Three-Dimensional Habitats* (Nikolaev, Galkin, Nikitin & Dieckmann). The two
+scripts are the exact, validated versions that produced the figures in the
+paper; they are included here **unmodified**.
 
-The radii are logarithmically spaced over \([0.1,10]\), and the sweep is performed independently in all three spatial dimensions.
-
-For each dimension, the two methods produce four comparison figures:
-
-1. Carrying capacity.
-2. Zero-distance pair density.
-3. Half-saturation distance.
-4. Spatial-structure degree.
-
-The corresponding CSV data underlying all figures are also provided.
-
-This repository accompanies the paper:
-
-*Effects of Competition and Dispersal Distances on Carrying Capacities of Spatial Logistic Dynamics in One-, Two-, and Three-Dimensional Habitats*
-
-**Authors:** Nikolaev, Galkin, Nikitin & Dieckmann.
-
-The two scripts included in this repository are the exact, validated versions used to produce the figures in the paper. They are provided **unmodified**.
-
-> **Before publishing:** Please review the author list and affiliations in [`CITATION.cff`](CITATION.cff), select an appropriate software license (an MIT placeholder is currently included in [`LICENSE`](LICENSE)), and add the repository URL and a release DOI (e.g., through Zenodo). All decisions requiring attention are marked with `TODO` in the corresponding files.
+> **Please review before publishing:** confirm the author list and affiliations
+> in [`CITATION.cff`](CITATION.cff), choose a license (an [MIT](LICENSE)
+> placeholder is included), and add the repository URL and a release
+> DOI (e.g. via Zenodo). Lines marked `TODO` in those files flag each decision.
 
 ---
 
-## 1. The Model and the Equations
+## The model and the equations
 
-We consider a population of **immobile individuals** distributed in \(\mathbb{R}^n\), where individuals reproduce and die continuously in time according to the spatial logistic model of Bolker & Pacala (1997) and Law & Dieckmann (2000).
+A population of **immobile** individuals in $`\mathbb{R}^n`$ reproduces and dies in
+continuous time (the spatial logistic model of Bolker & Pacala 1997 and Law &
+Dieckmann 2000). An individual is fully described by its location; the population
+is the set $`X`$ of occupied locations.
 
-Each individual is fully described by its spatial location, and the population is represented by the set \(X\) of occupied locations.
+**Individual-based model (IBM).** An individual at $`x`$ gives birth at rate $`b`$,
+placing offspring at $`x'`$ with probability density $`m(x'-x)`$, so the rate density
+of births at a location $`y`$ is
 
-### 1.1 Individual-Based Model (IBM)
-
-An individual at location \(x\) gives birth at rate \(b\), placing its offspring at location \(x'\) according to the dispersal probability density \(m(x'-x)\).
-
-Consequently, the rate density of births at location \(y\) is
-
-\[
-B(y\mid X)
-=
-b\sum_{x\in X}m(y-x).
-\tag{1}
-\]
-
-An individual at location \(x\) dies at a rate consisting of a background mortality term and competition from every **other** individual:
-
-\[
-D(x\mid X)
-=
-d+d'\sum_{\substack{x'\in X\\x'\neq x}}
-w(x-x').
-\tag{2}
-\]
-
-Both interaction kernels are isotropic \(n\)-dimensional Gaussian functions, with standard deviations \(\sigma_{\mathrm{m}}\) for dispersal and \(\sigma_{\mathrm{w}}\) for competition:
-
-\[
-m(x)
-=
-\frac{
-\exp\left(-\frac{\lVert x\rVert^2}{2\sigma_{\mathrm{m}}^2}\right)
-}{
-(2\pi\sigma_{\mathrm{m}}^2)^{n/2}
-},
-\]
-
-\[
-w(x)
-=
-\frac{
-\exp\left(-\frac{\lVert x\rVert^2}{2\sigma_{\mathrm{w}}^2}\right)
-}{
-(2\pi\sigma_{\mathrm{w}}^2)^{n/2}
-}.
-\tag{3}
-\]
-
-Equations (1)–(2) define **rates, not probabilities**. Together, they specify a continuous-time Markov birth–death process, which is simulated exactly by `IBM.py` using the Gillespie (1976) algorithm.
-
-In the IBM implementation, the competition kernel is truncated at \(4\sigma\), corresponding to less than **0.12% of its total mass**. The moment solver, in contrast, uses untruncated Gaussian kernels.
-
-### 1.2 Spatial Moments
-
-Let
-
-\[
-p(\xi)=\sum_{x\in X}\delta(\xi-x)
-\]
-
-denote the density function associated with a population configuration.
-
-The first- and second-order spatial moments are defined as
-
-\[
-N(p)
-=
-\frac{1}{|A|}
-\int_A p(\xi)\,d\xi,
-\]
-
-\[
-C(x,p)
-=
-\frac{1}{|A|}
-\int_A
-p(\xi)
-\left[p(\xi+x)-\delta(x)\right]
-\,d\xi.
-\tag{A2, A3}
-\]
-
-Here:
-
-- \(N\) represents the mean density of individuals.
-- \(C(x)\) represents the density of ordered pairs separated by displacement \(x\).
-- The Dirac delta term \(\delta(x)\) removes self-pairing.
-
-The **pair-correlation function** is defined by
-
-\[
-g(r)=\frac{C(r)}{N^2}.
-\]
-
-Its interpretation is:
-
-| Pair correlation | Spatial interpretation |
-|---|---|
-| \(g(r)=1\) | No spatial structure (random spatial distribution) |
-| \(g(r)>1\) | Clustering |
-| \(g(r)<1\) | Overdispersion |
-
-The third spatial moment \(T(x,y)\) describes the density of triplets.
-
-### 1.3 Equilibrium Moment Equations
-
-The fixed-point solver, `FP.py`, computes the **stationary state** of the spatial moment equations.
-
-At equilibrium, the spatial moments no longer change with time. Therefore,
-
-\[
-\frac{dN}{dt}=0,
-\qquad
-\frac{\partial C(x)}{\partial t}=0.
-\]
-
-Setting the left-hand sides of the moment dynamics (Law & Dieckmann, 2000) to zero gives the equilibrium conditions.
-
-**Density balance**
-
-The equilibrium density equation relates the mean density to the pair density integrated against the competition kernel:
-
-\[
-(b-d)N
-=
-d'\int w(y)C(y)\,dy.
-\tag{A4}
-\]
-
-**Pair-density balance**
-
-The equilibrium pair-density equation couples the second moment to the third moment:
-
-\[
-\begin{aligned}
-b\,m(x)N
-&+
-b\int m(x-y)C(y)\,dy\\
-&-
-\big(d+d'w(x)\big)C(x)\\
-&-
-d'\int w(y)T(x,y)\,dy
-=0.
-\end{aligned}
-\tag{A5}
-\]
-
-### 1.4 Asymmetric Power-2 Closure
-
-The moment hierarchy is not closed because the pair-density equation depends on the third-order moment \(T(x,y)\).
-
-We close the hierarchy using the **asymmetric power-2 closure** (Law, Murrell & Dieckmann, 2003; Murrell et al., 2004), which approximates the triplet density in terms of the first- and second-order moments:
-
-\[
-\begin{aligned}
-T(x,y)
-=
-\frac{1}{\alpha+\gamma}
-\Bigg[
-&\alpha\frac{C(x)C(y)}{N}
-+
-\beta\frac{C(x)C(x-y)}{N}\\
-&+
-\gamma\frac{C(y)C(x-y)}{N}
--
-\beta N^3
-\Bigg].
-\end{aligned}
-\tag{A6}
-\]
-
-The implementation uses the weights
-
-\[
-\boxed{\alpha:\beta:\gamma=4:1:1}
-\]
-
-corresponding to
-
-```python
-CLOSURE = (4, 1, 1)
+```math
+B(y \mid X) = b \sum_{x \in X} m(y - x). \qquad\text{(1)}
 ```
 
-Only the relative ratios matter. Thus, these weights are equivalent to the normalized values used in the paper:
+An individual at $`x`$ dies at a rate made of a background term and competition from
+every **other** individual:
 
-\[
-\alpha=\frac{2}{3},
+```math
+D(x \mid X) = d + d' \sum_{x' \in X,\; x' \ne x} w(x - x'). \qquad\text{(2)}
+```
+
+Both kernels are isotropic $`n`$-dimensional Gaussians of standard deviation
+$`\sigma_\mathrm{m}`$ (dispersal) and $`\sigma_\mathrm{w}`$ (competition):
+
+```math
+m(x) = \frac{\exp\!\big(-\lVert x\rVert^2 / 2\sigma_\mathrm{m}^2\big)}{(2\pi\sigma_\mathrm{m}^2)^{n/2}},
 \qquad
-\beta=\gamma=\frac{1}{6}.
-\]
+w(x) = \frac{\exp\!\big(-\lVert x\rVert^2 / 2\sigma_\mathrm{w}^2\big)}{(2\pi\sigma_\mathrm{w}^2)^{n/2}}. \qquad\text{(3)}
+```
 
-The subtractive term ensures that the mean-field limit is exact:
+Equations (1)–(2) are rates, not probabilities: together they define a
+continuous-time Markov birth–death process, simulated exactly by `IBM.py` with the
+Gillespie (1976) algorithm. In the simulation the competition kernel is truncated
+at $`4\sigma`$ (< 0.12 % of its mass); the moment solver uses untruncated Gaussians.
 
-\[
-T=N^3
-\qquad\text{when}\qquad C=N^2.
-\]
+**Spatial moments.** Writing $`p(\xi)=\sum_{x\in X}\delta(\xi-x)`$ for the density
+function of a configuration, the first and second moments are the expectations of
 
-The special case
+```math
+N(p) = \frac{1}{|A|}\int_A p(\xi)\,d\xi,
+\qquad
+C(x,p) = \frac{1}{|A|}\int_A p(\xi)\big[p(\xi+x)-\delta(x)\big]\,d\xi, \qquad\text{(A2, A3)}
+```
 
-\[
-1:0:0
-\]
+the mean density of individuals and of ordered pairs at displacement $`x`$; the
+$`\delta(x)`$ removes self-pairing. The **pair correlation** is $`g(r)=C(r)/N^2`$
+(= 1 with no structure, > 1 clustered, < 1 overdispersed). The third moment
+$`T(x,y)`$ is the density of triplets.
 
-recovers the simpler closure
+**Equilibrium moment equations (what `FP.py` solves).** We study the **stationary
+state**: the spatial moments no longer change, so the rate of change of the
+density and of the pair density is zero, $`dN/dt = 0`$ and
+$`\partial C(x)/\partial t = 0`$. Setting the left-hand sides of the moment
+dynamics (Law & Dieckmann 2000) to zero gives the equilibrium conditions. The
+density balance (the pair density integrated against competition fixes $`N`$):
 
-\[
-T(x,y)=\frac{C(x)C(y)}{N}.
-\]
+```math
+(b-d)\,N = d'\!\int w(y)\,C(y)\,dy, \qquad\text{(A4)}
+```
 
-Substituting the closure (A6) into the pair-density balance (A5), and eliminating \(N\) using the density balance (A4), yields a single nonlinear integral equation for \(C\).
+and the pair balance, which couples to the triplet density $`T`$:
 
-This equation is solved by `FP.py` using fixed-point iteration on a radial grid.
+```math
+b\,m(x)N + b\!\int m(x-y)\,C(y)\,dy - \big(d + d'w(x)\big)C(x) - d'\!\int w(y)\,T(x,y)\,dy = 0. \qquad\text{(A5)}
+```
 
-The complete equilibrium equation is given in **Equation A7** of [`model.md`](model.md).
+**Closure.** The hierarchy is closed with the asymmetric power-2 closure
+(Law, Murrell & Dieckmann 2003; Murrell et al. 2004), which approximates the
+triplet by pairs:
 
-### 1.5 Exact Equilibrium Identity
+```math
+T(x,y) = \frac{1}{\alpha+\gamma}\Big[\alpha\frac{C(x)C(y)}{N} + \beta\frac{C(x)C(x-y)}{N} + \gamma\frac{C(y)C(x-y)}{N} - \beta N^3\Big]. \qquad\text{(A6)}
+```
 
-At a positive equilibrium, the density equation yields the following exact identity, independently of the moment closure:
+This code uses **weights 4 : 1 : 1** ($`\alpha=4,\ \beta=\gamma=1`$; `CLOSURE=4,1,1`; only the
+ratios matter, so this is the same closure as the paper's normalized
+$`\alpha=\tfrac23,\ \beta=\gamma=\tfrac16`$); the subtractive term keeps the mean-field limit exact
+($`T=N^3`$ when $`C=N^2`$), and $`1:0:0`$ recovers the simpler closure $`T=C(x)C(y)/N`$.
+Substituting the closure (A6) into the pair balance (A5) and eliminating $`N`$
+through (A4) gives a single nonlinear integral equation for $`C`$, which `FP.py`
+solves by fixed-point iteration on a radial grid (the full
+equilibrium equation is Eq. A7 in [`model.md`](model.md)).
 
-\[
-\boxed{
-\frac{N}{\lambda}
-=
-\left[
-\int_{\mathbb{R}^n}w(x)g(x)\,dx
-\right]^{-1}
-}
-\tag{5}
-\]
+**Equilibrium identity.** At a positive equilibrium the density equation closes
+**exactly**, with no approximation:
 
-where
+```math
+\frac{N}{\lambda} = \left[\int_{\mathbb{R}^n} w(x)\,g(x)\,dx\right]^{-1}, \qquad\text{(5)}
+```
 
-\[
-\lambda=\frac{b-d}{d'}
-\]
-
-is the mean-field density.
-
-This identity provides a direct connection between spatial structure and carrying capacity.
-
-- **Overdispersion** (\(g<1\) where \(w\) is large) reduces the effective competition and raises the carrying capacity above the mean-field value.
-- **Clustering** increases the effective competition and lowers the carrying capacity.
-
-The complete derivation, nondimensionalization, exact equilibrium equation (A7), operator (A11), and definitions of \(\tilde r_{1/2}\) and \(S_n\) are documented in **[`model.md`](model.md)**.
-
----
-
-## 2. What the Code Computes
-
-For every combination of standardized interaction radii,
-
-\[
-\left(
-\tilde{\sigma}_{\mathrm{m}},
-\tilde{\sigma}_{\mathrm{w}}
-\right),
-\]
-
-and each spatial dimension \(n\in\{1,2,3\}\), both methods report four characteristics of the stationary state.
-
-| Symbol | Quantity | Description | Figure |
-|:---:|---|---|:---:|
-| \(\tilde N=N/\lambda\) | Standardized carrying capacity | Equilibrium density relative to the mean-field density | 2 |
-| \(g(0)=C(0)/N^2\) | Zero-distance pair density | Indicates clustering (\(>1\)) or overdispersion (\(<1\)) | 3 |
-| \(\tilde r_{1/2}\) | Half-saturation distance | Characteristic spatial extent of the structure | 4 |
-| \(S_n\) | Spatial-structure degree | \(L_1\) norm of \(\log_{10}g\) | 5 |
-
-The mathematical formulation—including the model, Gillespie algorithm, moment hierarchy, triplet approximation, closure, nondimensionalization, and definitions of the four characteristics—is documented in **[`model.md`](model.md)**.
-
-The exact columns and definitions of every output file are provided in **[`outputs.md`](outputs.md)**.
-
-### 2.1 Main Findings of the Paper
-
-The following findings are reproduced by the code:
-
-**1. Spatial structure determines carrying capacity.**
-
-Overdispersion raises the carrying capacity above its mean-field value when competition is shorter-ranged than dispersal. Conversely, clustering lowers the carrying capacity when competition is longer-ranged than dispersal.
-
-For equal interaction radii and zero intrinsic death rate, spatial structure vanishes, and the model reaches the mean-field equilibrium in every dimension.
-
-**2. Spatial effects become stronger with dimensionality.**
-
-The qualitative behaviour of the spatial effects is consistent across all dimensions. However, these effects become stronger with increasing dimensionality for small interaction radii and weaker for large interaction radii.
-
-**3. The half-saturation distance is controlled by the shorter interaction radius.**
-
-The half-saturation distance is primarily determined by the smaller of the dispersal and competition radii and exhibits very little dependence on spatial dimensionality.
-
-**4. Clustering and overdispersion are not symmetric.**
-
-Swapping the dispersal and competition radii does not produce a mirrored pair-density structure on a logarithmic scale. Clustering generates substantially more spatial structure than overdispersion.
-
-**5. Moment equations reproduce the overall patterns but have limitations.**
-
-The moment equations reproduce all the major qualitative patterns. However, they underestimate changes in carrying capacity when individuals interact with relatively few neighbours. This discrepancy is most pronounced for clustered populations in one dimension.
+where $`\lambda=(b-d)/d'`$ is the mean-field density. Overdispersion ($`g<1`$ where
+$`w`$ is large) raises the carrying capacity above the mean field; clustering lowers
+it. The full derivation, the nondimensionalization, the exact equilibrium
+equation (A7) and operator (A11), and the definitions of $`\tilde r_{1/2}`$ and
+$`S_n`$ are in **[`model.md`](model.md)**.
 
 ---
 
-## 3. Repository Structure
+## What the code computes
 
-The repository is organized as follows:
+For every combination of standardized radii $`(\tilde{\sigma}_\mathrm{m}, \tilde{\sigma}_\mathrm{w})`$ and each dimension, both methods report four
+characteristics of the stationary state:
 
-```text
+| Symbol | Name | Figure |
+|:--|:--|:--|
+| $`\tilde{N} = N/\lambda`$ | standardized carrying capacity (equilibrium density relative to the mean field) | 2 |
+| $`g(0) = C(0)/N^2`$ | standardized zero-distance pair density (clustering if $`>1`$, overdispersion if $`<1`$) | 3 |
+| $`\tilde{r}_{1/2}`$ | half-saturation distance (extent of the spatial structure) | 4 |
+| $`S_n`$ | spatial-structure degree ($`L_1`$ norm of $`\log_{10} g`$) | 5 |
+
+The mathematics — the model, the Gillespie algorithm, the moment hierarchy and
+triplets, the closure, the nondimensionalization, and the definitions of the
+four characteristics — is documented in **[`model.md`](model.md)**. The
+exact columns of every output file are documented in
+**[`outputs.md`](outputs.md)**.
+
+### Main findings of the paper (reproduced by this code)
+
+1. Overdispersion raises the carrying capacity above its mean-field value when
+   competition is shorter-ranged than dispersal, and clustering lowers it in the
+   opposite case; for equal radii and zero intrinsic death rate the spatial
+   structure vanishes and the model reaches the mean field in every dimension.
+2. These effects have the same qualitative behaviour in all dimensions, but grow
+   stronger with dimensionality for small radii and weaker for large radii.
+3. The half-saturation distance is set by the smaller of the two radii and
+   barely depends on dimensionality.
+4. Swapping the two radii does not mirror the pair density on a logarithmic
+   scale: clustering produces far more spatial structure than overdispersion.
+5. The moment equations reproduce all of these patterns, but underestimate the
+   changes in carrying capacity when individuals interact with few neighbours —
+   most strongly for clustered populations in one dimension.
+
+---
+
+## Repository layout
+
+```
 spatial-logistic-dynamics/
-│
-├── README.md              # Project overview and instructions
-├── model.md               # Model, algorithm, moments, closure, definitions
-├── outputs.md             # Complete CSV file and column documentation
-│
-├── FP.py                  # Moment-closure fixed-point solver + figures
-├── IBM.py                 # Individual-based Gillespie simulation + figures
-│
-├── run_FP.slurm           # Slurm array job for FP.py
-├── run_IBM.slurm          # Slurm array job for IBM.py
-│
-├── requirements.txt       # Python dependencies
-├── environment.yml        # Equivalent Conda environment
-│
-├── CITATION.cff           # Software citation metadata
-└── LICENSE                # MIT license placeholder
+├── README.md              # this file
+├── model.md               # model, algorithm, moments, closure, definitions (the theory)
+├── outputs.md             # every CSV file and column
+├── FP.py                  # moment-closure fixed-point solver + figures (unmodified)
+├── IBM.py                 # individual-based Gillespie simulation + figures (unmodified)
+├── run_FP.slurm           # Slurm array job for FP.py (all settings at the top)
+├── run_IBM.slurm          # Slurm array job for IBM.py (all settings at the top)
+├── requirements.txt       # pip dependencies
+├── environment.yml        # conda environment (equivalent)
+├── CITATION.cff           # how to cite — review before release
+└── LICENSE                # MIT placeholder — confirm or replace
 ```
 
-The two main Python scripts, `FP.py` and `IBM.py`, are provided unmodified.
+Each script writes its results **next to itself**, into a folder named after the
+method:
 
-### 3.1 Output Directories
-
-Each script writes its results next to itself, into a directory named after the corresponding method.
-
-```text
-FP/
-├── data/
-├── figures/
-├── work/
-└── logs/
-
-IBM/
-├── data/
-├── figures/
-├── work/
-└── logs/
+```
+FP/data/   FP/figures/   FP/work/   FP/logs/
+IBM/data/  IBM/figures/  IBM/work/  IBM/logs/
 ```
 
-The directories serve the following purposes:
-
-| Directory | Contents |
-|---|---|
-| `work/` | Partial results from individual array tasks; enables resumable execution |
-| `data/` | Final CSV files and numerical results |
-| `figures/` | Generated comparison figures in PNG and PDF formats |
-| `logs/` | Execution logs |
-
-All generated output directories are excluded from version control through `.gitignore`.
+`work/` holds the partial results of the array tasks and makes every run
+**resumable**; `data/` holds the CSV files; `figures/` holds the PNG and PDF
+panels. These output folders are git-ignored (see `.gitignore`).
 
 ---
 
-## 4. Requirements and Installation
+## Requirements
 
-The code requires:
-
-- Python ≥ 3.9
-- NumPy
-- SciPy
-- pandas
-- Matplotlib
-
-Install the dependencies using either pip or Conda.
-
-**Option 1: pip**
+Python ≥ 3.9 with NumPy, SciPy, pandas, and Matplotlib. Install with either:
 
 ```bash
 pip install -r requirements.txt
+# or
+conda env create -f environment.yml && conda activate spatial-logistic
 ```
 
-**Option 2: Conda**
-
-```bash
-conda env create -f environment.yml
-conda activate spatial-logistic
-```
-
-### Computational Requirements
-
-The complete parameter sweep is computationally intensive, particularly for the stochastic IBM.
-
-| Method | Computational requirements |
-|---|---|
-| FP | Runs comfortably on a single workstation |
-| IBM | Approximately 16,000 CPU-hours for the complete sweep |
-
-The full IBM computation is intended for a high-performance computing (HPC) cluster equipped with Slurm.
-
-Neither method requires a GPU or network access.
+The full sweep is heavy (≈ 16,000 CPU-hours for the IBM; see below) and is meant
+for a cluster with Slurm. The FP sweep and all post-processing run comfortably on
+a single workstation. Neither script needs a GPU or network access.
 
 ---
 
-## 5. Quick Start: Running on a Laptop
+## Quick start (a few minutes, on a laptop)
 
-Both scripts include a built-in self-test that runs on a coarse \(4\times4\) parameter grid.
-
-Run the tests using:
+Each script has a built-in self-test on a coarse 4 × 4 grid:
 
 ```bash
-python FP.py test
-python IBM.py test
+python FP.py test      # -> FP_test/
+python IBM.py test     # -> IBM_test/
 ```
 
-The scripts generate:
+These check that the code runs end to end and produce small CSV files you can
+inspect. They do **not** reproduce the paper (the grid is too coarse for
+figures).
 
-```text
-FP_test/
-IBM_test/
-```
-
-These tests verify that the code executes end to end and produces small CSV files that can be inspected.
-
-**Important:** The self-tests are intended only for checking the implementation. They do not reproduce the paper because the parameter grid is too coarse for the published figures.
-
-### 5.1 Running the Fixed-Point Solver Locally
-
-To execute the FP parameter sweep without Slurm:
+Run one method by hand without Slurm (uses all local cores; `finish` then writes
+the data and, if the grid is complete, the figures):
 
 ```bash
-python FP.py run
-python FP.py finish
-```
-
-The first command runs the sweep using the available local cores. The second command collects the results and generates the figures once the grid is complete.
-
-The FP sweep typically takes from several minutes to approximately one hour, depending on the hardware.
-
-### 5.2 Checking IBM Progress
-
-To inspect the progress of an interrupted or ongoing IBM computation:
-
-```bash
-python IBM.py status
+python FP.py run && python FP.py finish       # FP sweep: minutes to ~1 h
+python IBM.py status                          # progress of an interrupted run
 ```
 
 ---
 
-## 6. Reproducing the Paper on an HPC Cluster
+## Reproducing the paper (on a cluster)
 
-All computational settings are defined at the top of the two Slurm submission scripts.
-
-**Edit the settings in the Slurm files rather than modifying the Python scripts.**
-
-Submit each job from the directory containing its corresponding Python script.
-
-### 6.1 Submit the Fixed-Point Sweep
+All run settings live at the top of the two Slurm files — edit them there, not in
+the Python. Submit each job from the folder that contains the matching script:
 
 ```bash
-sbatch run_FP.slurm
+sbatch run_FP.slurm      # deterministic: 10,800 cells (60×60×3), ~1 node-day
+sbatch run_IBM.slurm     # stochastic: 150 realizations/cell, ~16,000 CPU-hours
 ```
 
-- Deterministic computation.
-- \(60\times60\times3=10,800\) parameter cells.
-- Approximately one node-day.
-
-### 6.2 Submit the Individual-Based Simulations
-
-```bash
-sbatch run_IBM.slurm
-```
-
-- Stochastic computation.
-- 150 realizations per parameter cell.
-- Approximately 16,000 CPU-hours.
-
-### 6.3 Resuming Interrupted Jobs
-
-The Slurm array tasks share intermediate results in the `work/` directory.
-
-**The task that completes the final piece automatically writes the final CSV data and figures.**
-
-If some array tasks terminate because they reach their time limits, simply submit the same Slurm file again:
-
-```bash
-sbatch run_FP.slurm
-```
-
-or
-
-```bash
-sbatch run_IBM.slurm
-```
-
-Previously completed work is preserved. Only the remaining computations are executed.
-
-To explicitly trigger the final data collection and figure generation after a partial run:
+The array tasks share the work. **The task that completes the last piece writes
+`data/` and `figures/` automatically.** If some tasks stop at the time limit,
+**submit the same file again** — finished work is kept and only the rest is run.
+To force the write-up after a partial run:
 
 ```bash
 python FP.py finish
 python IBM.py finish
 ```
 
-### 6.4 Estimating IBM Computational Cost
-
-Before submitting the full IBM sweep, estimate its computational cost and determine a suitable array size for your hardware:
+To estimate the IBM cost and a sensible array size on your hardware first:
 
 ```bash
 python IBM.py estimate
 ```
 
-### 6.5 Key Computational Settings
+### Key settings (Slurm file → meaning)
 
-All settings are defined in the corresponding Slurm file.
+| Setting | FP | IBM | Meaning |
+|:--|:--:|:--:|:--|
+| `N_AXIS` | 60 | 60 | grid points per axis, $`\tilde{\sigma}\in[0.1,10]`$ (log) |
+| `D_RATE` | 0.0 | 0.0 | intrinsic death rate $`d`$ (⇒ $`\lambda = (b-d)/d' = 400`$) |
+| `CLOSURE` | 4,1,1 | — | asymmetric power-2 closure weights $`\alpha,\beta,\gamma`$ |
+| `COMP_TRUNC` | 0 | — | FP competition kernel untruncated |
+| `DISPERSAL` | gaussian | gaussian | $`n`$-dimensional Gaussian dispersal |
+| `G0_MODE` | point | — | $`g(0)`$ taken at zero distance |
+| `KCUT` | — | 4 | IBM competition kernel cut at $`4\sigma`$ (< 0.12 % of its mass) |
+| `REPS` | — | 150 | realizations per cell |
+| `T_END` | — | 100 | simulated time per realization |
+| `T_EQUIL` | — | 30 | average $`N`$ over $`[T_\text{EQUIL}, T_\text{END}]`$ |
+| `T_SNAP`, `SNAP_DT` | — | 30, 1 | pair-count snapshots: from $`t=30`$, every 1 time unit |
+| `T_SNAP_LATE` | — | 70 | strongly clustered cells: use only snapshots from $`t=70`$ |
 
-| Setting | FP | IBM | Description |
-|---|:---:|:---:|---|
-| `N_AXIS` | 60 | 60 | Number of grid points per axis; logarithmic spacing over \([0.1,10]\) |
-| `D_RATE` | 0.0 | 0.0 | Intrinsic death rate \(d\); gives \(\lambda=(b-d)/d'=400\) |
-| `CLOSURE` | 4,1,1 | — | Asymmetric power-2 closure weights \(\alpha,\beta,\gamma\) |
-| `COMP_TRUNC` | 0 | — | FP competition kernel remains untruncated |
-| `DISPERSAL` | gaussian | gaussian | \(n\)-dimensional Gaussian dispersal kernel |
-| `G0_MODE` | point | — | Evaluates \(g(0)\) directly at zero distance |
-| `KCUT` | — | 4 | IBM competition kernel truncated at \(4\sigma\), retaining more than 99.88% of its mass |
-| `REPS` | — | 150 | Number of realizations per parameter cell |
-| `T_END` | — | 100 | Total simulated time per realization |
-| `T_EQUIL` | — | 30 | Equilibrium density averaged over \([T_{\mathrm{EQUIL}},T_{\mathrm{END}}]\) |
-| `T_SNAP`, `SNAP_DT` | — | 30, 1 | Pair-count snapshots starting at \(t=30\), taken every 1 time unit |
-| `T_SNAP_LATE` | — | 70 | For strongly clustered cells, only snapshots from \(t=70\) onward are used |
+`b = 0.4` and `d' = 0.001` are fixed inside the scripts; with `D_RATE=0.0` this
+gives the mean-field density $`\lambda = 400`$. Both scripts also accept these as
+environment variables, so the Slurm files are the single place to change a run.
 
-The birth rate and competition coefficient are fixed inside the scripts:
+> **Note on the clustered one-dimensional cells.** At `T_END=100` the most
+> strongly clustered populations in one dimension have not fully equilibrated
+> (their density was still drifting down by a few percent between the two halves
+> of the averaging window). The IBM flags these cells (`equilibrated = 0` in
+> `ibm_std_data_D1.csv`), the paper treats their carrying capacities as upper
+> bounds, and the comparison medians exclude them. To turn them into converged
+> values, raise `T_END` (e.g. to 300) and resubmit `run_IBM.slurm`; the run
+> resumes and only the missing work is redone.
 
-\[
-b=0.4,
-\qquad
-d'=0.001.
-\]
+---
 
-With `D_RATE=0.0`, the resulting mean-field density is
+## Outputs
 
-\[
-\lambda=\frac{b-d}{d'}=400.
-\]
+After a complete run each method writes, per dimension `D ∈ {1,2,3}`:
 
-Both scripts also accept these parameters through environment variables, making the Slurm files the central location for configuring a computational run.
+* `*/data/…_D{1,2,3}.csv` — one row per grid cell, with $`\tilde{N}`$, $`g(0)`$,
+  $`\tilde{r}_{1/2}`$, $`S_n`$ and diagnostics;
+* `*/data/…_curves_points.csv` — the full pair-correlation curves $`g(\tilde r)`$
+  at the seven marked points of Figure 3;
+* `IBM/data/ibm_pair_counts_D*.csv` — the raw pooled pair counts, from which
+  every IBM characteristic can be recomputed;
+* `*/data/run_settings.csv` — the exact settings of the run (archive this);
+* `*/figures/Figure2…Figure5_*.{png,pdf}` — the four comparison figures.
 
-### 6.6 Note on Strongly Clustered One-Dimensional Cells
+See **[`outputs.md`](outputs.md)** for the full column dictionary.
 
-At `T_END=100`, the most strongly clustered populations in one dimension have not fully equilibrated.
+---
 
-Their population densities are still drifting downward by a few percent between the two halves of the averaging window.
+## How the two methods differ (and why they agree)
 
-The IBM implementation flags these cells using:
+* **IBM** samples the stochastic process exactly (continuous-time Gillespie),
+  averages over realizations, and is limited by the size of the habitat (a unit
+  volume holding $`\lambda = 400`$ individuals, i.e. $`400 / 20 / 7.4`$ standardized
+  lengths wide in 1D / 2D / 3D) and by finite run time.
+* **FP** solves the closed moment equations deterministically on a radial grid
+  using a quasi-discrete Hankel transform (Guizar-Sicairos & Gutiérrez-Vega
+  2004), so it is cheap and covers all distances, but its accuracy depends on the
+  closure.
 
-```text
-equilibrated = 0
-```
+The closure is exact in the mean-field limit and wherever individuals interact
+with many neighbours, and least accurate where they interact with few — which is
+exactly the regime (clustered 1D, smallest competition radii) that the
+comparison in the paper maps out. See `model.md` for the details.
 
-in `ibm_std_data_D1.csv`.
+---
 
-For these cases:
+## Citing
 
-- The paper treats the computed carrying capacities as **upper bounds**.
-- The comparison medians exclude these non-equilibrated cells.
-- The remaining density drift is associated with slow convergence in strongly clustered one-dimensional populations.
+If you use this code, please cite the paper and the software — see
+[`CITATION.cff`](CITATION.cff). Please also cite the sources of the method:
+Bolker & Pacala (1997); Law & Dieckmann (2000); Law, Murrell & Dieckmann (2003)
+for the closure; and Guizar-Sicairos & Gutiérrez-Vega (2004) for the radial
+transform.
 
-To obtain more fully converged values, increase the simulation end time, for example:
+## License
 
-```text
-T_END=300
-```
-
-Then resubmit `run_IBM.sl
+Released under the MIT License (see [`LICENSE`](LICENSE)) — **confirm or replace
+this before publishing**, as your institution may require a specific license.
