@@ -10,8 +10,8 @@ independent methods and compared cell by cell:
   closed with the asymmetric power-2 closure (weights **4 : 1 : 1**).
 
 Each method sweeps a **60 × 60** grid of the two standardized interaction radii
-— the dispersal radius $\tilde{\sigma}_\mathrm{m}$ and the competition radius
-$\tilde{\sigma}_\mathrm{w}$, logarithmically spaced over $[0.1, 10]$ — in all
+— the dispersal radius $`\tilde{\sigma}_\mathrm{m}`$ and the competition radius
+$`\tilde{\sigma}_\mathrm{w}`$, logarithmically spaced over $`[0.1, 10]`$ — in all
 three dimensions, and produces four comparison figures (carrying capacity,
 zero-distance pair density, half-saturation distance, and spatial-structure
 degree) together with the CSV data behind them.
@@ -31,63 +31,77 @@ paper; they are included here **unmodified**.
 
 ## The model and the equations
 
-A population of **immobile** individuals in $\mathbb{R}^n$ reproduces and dies in
+A population of **immobile** individuals in $`\mathbb{R}^n`$ reproduces and dies in
 continuous time (the spatial logistic model of Bolker & Pacala 1997 and Law &
 Dieckmann 2000). An individual is fully described by its location; the population
-is the set $X$ of occupied locations.
+is the set $`X`$ of occupied locations.
 
-**Individual-based model (IBM).** An individual at $x$ gives birth at rate $b$,
-placing offspring at $x'$ with probability density $m(x'-x)$, so the rate density
-of births at a location $y$ is
+**Individual-based model (IBM).** An individual at $`x`$ gives birth at rate $`b`$,
+placing offspring at $`x'`$ with probability density $`m(x'-x)`$, so the rate density
+of births at a location $`y`$ is
 
-$$B(y \mid X) = b \sum_{x \in X} m(y - x). \tag{1}$$
+```math
+B(y \mid X) = b \sum_{x \in X} m(y - x). \tag{1}
+```
 
-An individual at $x$ dies at a rate made of a background term and competition from
+An individual at $`x`$ dies at a rate made of a background term and competition from
 every **other** individual:
 
-$$D(x \mid X) = d + d' \sum_{x' \in X,\; x' \ne x} w(x - x'). \tag{2}$$
+```math
+D(x \mid X) = d + d' \sum_{x' \in X,\; x' \ne x} w(x - x'). \tag{2}
+```
 
-Both kernels are isotropic $n$-dimensional Gaussians of standard deviation
-$\sigma_\mathrm{m}$ (dispersal) and $\sigma_\mathrm{w}$ (competition):
+Both kernels are isotropic $`n`$-dimensional Gaussians of standard deviation
+$`\sigma_\mathrm{m}`$ (dispersal) and $`\sigma_\mathrm{w}`$ (competition):
 
-$$m(x) = \frac{\exp\!\big(-\lVert x\rVert^2 / 2\sigma_\mathrm{m}^2\big)}{(2\pi\sigma_\mathrm{m}^2)^{n/2}},
+```math
+m(x) = \frac{\exp\!\big(-\lVert x\rVert^2 / 2\sigma_\mathrm{m}^2\big)}{(2\pi\sigma_\mathrm{m}^2)^{n/2}},
 \qquad
-w(x) = \frac{\exp\!\big(-\lVert x\rVert^2 / 2\sigma_\mathrm{w}^2\big)}{(2\pi\sigma_\mathrm{w}^2)^{n/2}}. \tag{3}$$
+w(x) = \frac{\exp\!\big(-\lVert x\rVert^2 / 2\sigma_\mathrm{w}^2\big)}{(2\pi\sigma_\mathrm{w}^2)^{n/2}}. \tag{3}
+```
 
 Equations (1)–(2) are rates, not probabilities: together they define a
 continuous-time Markov birth–death process, simulated exactly by `IBM.py` with the
 Gillespie (1976) algorithm. In the simulation the competition kernel is truncated
-at $4\sigma$ (< 0.12 % of its mass); the moment solver uses untruncated Gaussians.
+at $`4\sigma`$ (< 0.12 % of its mass); the moment solver uses untruncated Gaussians.
 
-**Spatial moments.** Writing $p(\xi)=\sum_{x\in X}\delta(\xi-x)$ for the density
+**Spatial moments.** Writing $`p(\xi)=\sum_{x\in X}\delta(\xi-x)`$ for the density
 function of a configuration, the first and second moments are the expectations of
 
-$$N(p) = \frac{1}{|A|}\int_A p(\xi)\,d\xi,
+```math
+N(p) = \frac{1}{|A|}\int_A p(\xi)\,d\xi,
 \qquad
-C(x,p) = \frac{1}{|A|}\int_A p(\xi)\big[p(\xi+x)-\delta(x)\big]\,d\xi, \tag{A2, A3}$$
+C(x,p) = \frac{1}{|A|}\int_A p(\xi)\big[p(\xi+x)-\delta(x)\big]\,d\xi, \tag{A2, A3}
+```
 
-the mean density of individuals and of ordered pairs at displacement $x$; the
-$\delta(x)$ removes self-pairing. The **pair correlation** is $g(r)=C(r)/N^2$
+the mean density of individuals and of ordered pairs at displacement $`x`$; the
+$`\delta(x)`$ removes self-pairing. The **pair correlation** is $`g(r)=C(r)/N^2`$
 (= 1 with no structure, > 1 clustered, < 1 overdispersed). The third moment
-$T(x,y)$ is the density of triplets.
+$`T(x,y)`$ is the density of triplets.
 
 **Moment dynamics (what `FP.py` solves at equilibrium).** The density equation
 couples to the pair density, and the pair equation couples to the triplet
 (Law & Dieckmann 2000):
 
-$$\frac{dN}{dt} = (b-d)N - d'\!\int w(y)\,C(y)\,dy, \tag{A4}$$
+```math
+\frac{dN}{dt} = (b-d)N - d'\!\int w(y)\,C(y)\,dy, \tag{A4}
+```
 
-$$\frac{\partial C(x)}{\partial t} = 2\Big[\,b\,m(x)N + b\!\int m(x-y)C(y)\,dy - \big(d + d'w(x)\big)C(x) - d'\!\int w(y)\,T(x,y)\,dy\,\Big]. \tag{A5}$$
+```math
+\frac{\partial C(x)}{\partial t} = 2\Big[\,b\,m(x)N + b\!\int m(x-y)C(y)\,dy - \big(d + d'w(x)\big)C(x) - d'\!\int w(y)\,T(x,y)\,dy\,\Big]. \tag{A5}
+```
 
 **Closure.** The hierarchy is closed with the asymmetric power-2 closure
 (Law, Murrell & Dieckmann 2003; Murrell et al. 2004), which approximates the
 triplet by pairs:
 
-$$T(x,y) = \frac{1}{\alpha+\gamma}\Big[\alpha\frac{C(x)C(y)}{N} + \beta\frac{C(x)C(x-y)}{N} + \gamma\frac{C(y)C(x-y)}{N} - \beta N^3\Big]. \tag{A6}$$
+```math
+T(x,y) = \frac{1}{\alpha+\gamma}\Big[\alpha\frac{C(x)C(y)}{N} + \beta\frac{C(x)C(x-y)}{N} + \gamma\frac{C(y)C(x-y)}{N} - \beta N^3\Big]. \tag{A6}
+```
 
-This code uses **weights 4 : 1 : 1** ($\alpha=\tfrac23,\ \beta=\gamma=\tfrac16$;
+This code uses **weights 4 : 1 : 1** ($`\alpha=\tfrac23,\ \beta=\gamma=\tfrac16`$;
 `CLOSURE=4,1,1`); the subtractive term keeps the mean-field limit exact
-($T=N^3$ when $C=N^2$), and $1:0:0$ recovers the simpler closure $T=C(x)C(y)/N$.
+($`T=N^3`$ when $`C=N^2`$), and $`1:0:0`$ recovers the simpler closure $`T=C(x)C(y)/N`$.
 Substituting (A6) into the equilibrium form of (A5) gives the nonlinear integral
 equation that `FP.py` solves by fixed-point iteration on a radial grid (the full
 equilibrium equation is Eq. A7 in [`model.md`](model.md)).
@@ -95,28 +109,29 @@ equilibrium equation is Eq. A7 in [`model.md`](model.md)).
 **Equilibrium identity.** At a positive equilibrium the density equation closes
 **exactly**, with no approximation:
 
-$$\frac{N}{\lambda} = \left[\int_{\mathbb{R}^n} w(x)\,g(x)\,dx\right]^{-1}, \tag{5}$$
+```math
+\frac{N}{\lambda} = \left[\int_{\mathbb{R}^n} w(x)\,g(x)\,dx\right]^{-1}, \tag{5}
+```
 
-where $\lambda=(b-d)/d'$ is the mean-field density. Overdispersion ($g<1$ where
-$w$ is large) raises the carrying capacity above the mean field; clustering lowers
+where $`\lambda=(b-d)/d'`$ is the mean-field density. Overdispersion ($`g<1`$ where
+$`w`$ is large) raises the carrying capacity above the mean field; clustering lowers
 it. The full derivation, the nondimensionalization, the exact equilibrium
-equation (A7) and operator (A11), and the definitions of $\tilde r_{1/2}$ and
-$S_n$ are in **[`model.md`](model.md)**.
+equation (A7) and operator (A11), and the definitions of $`\tilde r_{1/2}`$ and
+$`S_n`$ are in **[`model.md`](model.md)**.
 
 ---
 
 ## What the code computes
 
-For every combination of standardized radii $(\tilde{\sigma}_\mathrm{m},
-\tilde{\sigma}_\mathrm{w})$ and each dimension, both methods report four
+For every combination of standardized radii $`(\tilde{\sigma}_\mathrm{m}, \tilde{\sigma}_\mathrm{w})`$ and each dimension, both methods report four
 characteristics of the stationary state:
 
 | Symbol | Name | Figure |
 |:--|:--|:--|
-| $\tilde{N} = N/\lambda$ | standardized carrying capacity (equilibrium density relative to the mean field) | 2 |
-| $g(0) = C(0)/N^2$ | standardized zero-distance pair density (clustering if $>1$, overdispersion if $<1$) | 3 |
-| $\tilde{r}_{1/2}$ | half-saturation distance (extent of the spatial structure) | 4 |
-| $S_n$ | spatial-structure degree ($L_1$ norm of $\log_{10} g$) | 5 |
+| $`\tilde{N} = N/\lambda`$ | standardized carrying capacity (equilibrium density relative to the mean field) | 2 |
+| $`g(0) = C(0)/N^2`$ | standardized zero-distance pair density (clustering if $`>1`$, overdispersion if $`<1`$) | 3 |
+| $`\tilde{r}_{1/2}`$ | half-saturation distance (extent of the spatial structure) | 4 |
+| $`S_n`$ | spatial-structure degree ($`L_1`$ norm of $`\log_{10} g`$) | 5 |
 
 The mathematics — the model, the Gillespie algorithm, the moment hierarchy and
 triplets, the closure, the nondimensionalization, and the definitions of the
@@ -242,21 +257,21 @@ python IBM.py estimate
 
 | Setting | FP | IBM | Meaning |
 |:--|:--:|:--:|:--|
-| `N_AXIS` | 60 | 60 | grid points per axis, $\tilde{\sigma}\in[0.1,10]$ (log) |
-| `D_RATE` | 0.0 | 0.0 | intrinsic death rate $d$ (⇒ $\lambda = (b-d)/d' = 400$) |
-| `CLOSURE` | 4,1,1 | — | asymmetric power-2 closure weights $\alpha,\beta,\gamma$ |
+| `N_AXIS` | 60 | 60 | grid points per axis, $`\tilde{\sigma}\in[0.1,10]`$ (log) |
+| `D_RATE` | 0.0 | 0.0 | intrinsic death rate $`d`$ (⇒ $`\lambda = (b-d)/d' = 400`$) |
+| `CLOSURE` | 4,1,1 | — | asymmetric power-2 closure weights $`\alpha,\beta,\gamma`$ |
 | `COMP_TRUNC` | 0 | — | FP competition kernel untruncated |
-| `DISPERSAL` | gaussian | gaussian | $n$-dimensional Gaussian dispersal |
-| `G0_MODE` | point | — | $g(0)$ taken at zero distance |
-| `KCUT` | — | 4 | IBM competition kernel cut at $4\sigma$ (< 0.12 % of its mass) |
+| `DISPERSAL` | gaussian | gaussian | $`n`$-dimensional Gaussian dispersal |
+| `G0_MODE` | point | — | $`g(0)`$ taken at zero distance |
+| `KCUT` | — | 4 | IBM competition kernel cut at $`4\sigma`$ (< 0.12 % of its mass) |
 | `REPS` | — | 150 | realizations per cell |
 | `T_END` | — | 100 | simulated time per realization |
-| `T_EQUIL` | — | 30 | average $N$ over $[T_\text{EQUIL}, T_\text{END}]$ |
-| `T_SNAP`, `SNAP_DT` | — | 30, 1 | pair-count snapshots: from $t=30$, every 1 time unit |
-| `T_SNAP_LATE` | — | 70 | strongly clustered cells: use only snapshots from $t=70$ |
+| `T_EQUIL` | — | 30 | average $`N`$ over $`[T_\text{EQUIL}, T_\text{END}]`$ |
+| `T_SNAP`, `SNAP_DT` | — | 30, 1 | pair-count snapshots: from $`t=30`$, every 1 time unit |
+| `T_SNAP_LATE` | — | 70 | strongly clustered cells: use only snapshots from $`t=70`$ |
 
 `b = 0.4` and `d' = 0.001` are fixed inside the scripts; with `D_RATE=0.0` this
-gives the mean-field density $\lambda = 400$. Both scripts also accept these as
+gives the mean-field density $`\lambda = 400`$. Both scripts also accept these as
 environment variables, so the Slurm files are the single place to change a run.
 
 > **Note on the clustered one-dimensional cells.** At `T_END=100` the most
@@ -274,9 +289,9 @@ environment variables, so the Slurm files are the single place to change a run.
 
 After a complete run each method writes, per dimension `D ∈ {1,2,3}`:
 
-* `*/data/…_D{1,2,3}.csv` — one row per grid cell, with $\tilde{N}$, $g(0)$,
-  $\tilde{r}_{1/2}$, $S_n$ and diagnostics;
-* `*/data/…_curves_points.csv` — the full pair-correlation curves $g(\tilde r)$
+* `*/data/…_D{1,2,3}.csv` — one row per grid cell, with $`\tilde{N}`$, $`g(0)`$,
+  $`\tilde{r}_{1/2}`$, $`S_n`$ and diagnostics;
+* `*/data/…_curves_points.csv` — the full pair-correlation curves $`g(\tilde r)`$
   at the seven marked points of Figure 3;
 * `IBM/data/ibm_pair_counts_D*.csv` — the raw pooled pair counts, from which
   every IBM characteristic can be recomputed;
@@ -291,7 +306,7 @@ See **[`outputs.md`](outputs.md)** for the full column dictionary.
 
 * **IBM** samples the stochastic process exactly (continuous-time Gillespie),
   averages over realizations, and is limited by the size of the habitat (a unit
-  volume holding $\lambda = 400$ individuals, i.e. $400 / 20 / 7.4$ standardized
+  volume holding $`\lambda = 400`$ individuals, i.e. $`400 / 20 / 7.4`$ standardized
   lengths wide in 1D / 2D / 3D) and by finite run time.
 * **FP** solves the closed moment equations deterministically on a radial grid
   using a quasi-discrete Hankel transform (Guizar-Sicairos & Gutiérrez-Vega
