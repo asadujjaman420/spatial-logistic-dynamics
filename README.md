@@ -79,16 +79,21 @@ $`\delta(x)`$ removes self-pairing. The **pair correlation** is $`g(r)=C(r)/N^2`
 (= 1 with no structure, > 1 clustered, < 1 overdispersed). The third moment
 $`T(x,y)`$ is the density of triplets.
 
-**Moment dynamics (what `FP.py` solves at equilibrium).** The density equation
-couples to the pair density, and the pair equation couples to the triplet
-(Law & Dieckmann 2000):
+**Equilibrium moment equations (what `FP.py` solves).** We study the **stationary
+state**: the spatial moments no longer change, so the rate of change of the
+density and of the pair density is zero, $`dN/dt = 0`$ and
+$`\partial C(x)/\partial t = 0`$. Setting the left-hand sides of the moment
+dynamics (Law & Dieckmann 2000) to zero gives the equilibrium conditions. The
+density balance (the pair density integrated against competition fixes $`N`$):
 
 ```math
-\frac{dN}{dt} = (b-d)N - d'\!\int w(y)\,C(y)\,dy, \qquad\text{(A4)}
+(b-d)\,N = d'\!\int w(y)\,C(y)\,dy, \qquad\text{(A4)}
 ```
 
+and the pair balance, which couples to the triplet density $`T`$:
+
 ```math
-\frac{\partial C(x)}{\partial t} = 2\Big[\,b\,m(x)N + b\!\int m(x-y)C(y)\,dy - \big(d + d'w(x)\big)C(x) - d'\!\int w(y)\,T(x,y)\,dy\,\Big]. \qquad\text{(A5)}
+b\,m(x)N + b\!\int m(x-y)\,C(y)\,dy - \big(d + d'w(x)\big)C(x) - d'\!\int w(y)\,T(x,y)\,dy = 0. \qquad\text{(A5)}
 ```
 
 **Closure.** The hierarchy is closed with the asymmetric power-2 closure
@@ -103,8 +108,9 @@ This code uses **weights 4 : 1 : 1** ($`\alpha=4,\ \beta=\gamma=1`$; `CLOSURE=4,
 ratios matter, so this is the same closure as the paper's normalized
 $`\alpha=\tfrac23,\ \beta=\gamma=\tfrac16`$); the subtractive term keeps the mean-field limit exact
 ($`T=N^3`$ when $`C=N^2`$), and $`1:0:0`$ recovers the simpler closure $`T=C(x)C(y)/N`$.
-Substituting (A6) into the equilibrium form of (A5) gives the nonlinear integral
-equation that `FP.py` solves by fixed-point iteration on a radial grid (the full
+Substituting the closure (A6) into the pair balance (A5) and eliminating $`N`$
+through (A4) gives a single nonlinear integral equation for $`C`$, which `FP.py`
+solves by fixed-point iteration on a radial grid (the full
 equilibrium equation is Eq. A7 in [`model.md`](model.md)).
 
 **Equilibrium identity.** At a positive equilibrium the density equation closes
